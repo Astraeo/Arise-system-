@@ -1,0 +1,41 @@
+<!DOCTYPE html><html>
+<head>
+  <title>ARISE SYSTEM</title>
+  <style>
+    body{
+      background:black;
+      color:#00ffcc;
+      text-align:center;
+      font-family:Arial;
+      padding-top:50px;
+    }button{
+  padding:10px;
+  margin-top:20px;
+  background:#00ffcc;
+  border:none;
+  font-weight:bold;
+}
+
+  </style>
+</head>
+<body><h1>ARISE SYSTEM</h1><h2>Level: <span id="level">1</span></h2>
+<h2>XP: <span id="xp">0</span></h2><button onclick="addXP()">Complete Quest</button>
+
+<script>
+let xp = 0;
+let level = 1;
+
+function addXP(){
+  xp += 20;
+
+  if(xp >= 100){
+    xp = 0;
+    level++;
+    alert("LEVEL UP!");
+  }
+
+  document.getElementById("xp").innerText = xp;
+  document.getElementById("level").innerText = level;
+}
+</script></body>
+</html>
