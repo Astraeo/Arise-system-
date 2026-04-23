@@ -6,47 +6,65 @@
   <style>
     body{
       margin:0;
-      background: radial-gradient(circle at top, #001a1a, #000);
+      background:black;
       color:#00ffcc;
       font-family:Arial;
       text-align:center;
-      padding:15px;
-    }
-
-    h1{
-      text-shadow:0 0 15px #00ffcc;
     }
 
     .panel{
       border:1px solid #00ffcc;
-      border-radius:14px;
       margin:10px;
-      padding:15px;
-      box-shadow:0 0 20px #00ffcc22;
-    }
-
-    .btn{
       padding:10px;
-      margin:5px;
-      border:1px solid #00ffcc;
-      background:transparent;
-      color:#00ffcc;
-      cursor:pointer;
-      border-radius:8px;
+      border-radius:10px;
     }
 
     .quest{
       border:1px solid #00ffcc55;
-      margin:6px;
+      margin:5px;
       padding:10px;
-      border-radius:10px;
       cursor:pointer;
     }
 
-    #system{
-      font-weight:bold;
-      background:#001f1f;
+    button{
+      padding:10px;
+      margin:5px;
     }
+
+    /* CINEMATIC */
+    #specialOverlay{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:black;
+      color:#00ffcc;
+      display:none;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+      z-index:999;
+      text-align:center;
+    }
+
+    .glow{
+      text-shadow:0 0 20px #00ffcc;
+    }
+
+    /* AVATAR */
+    #avatar{
+      width:80px;
+      height:80px;
+      border-radius:50%;
+      border:2px solid #00ffcc;
+      margin:auto;
+    }
+
+    .frame-dark{
+      box-shadow:0 0 20px purple;
+    }
+
   </style>
 </head>
 
@@ -54,13 +72,9 @@
 
 <h1>⚡ ARISE SYSTEM ⚡</h1>
 
-<div class="panel" id="system">SYSTEM READY</div>
-
-<button class="btn" onclick="toggleSound()">🔊 SOUND</button>
-
 <div class="panel">
-  LEVEL: <span id="level">1</span> |
-  XP: <span id="xp">0</span>/100
+  <div id="avatar"></div>
+  <p>LEVEL: <span id="level">1</span> | XP: <span id="xp">0</span></p>
 </div>
 
 <div class="panel">
@@ -70,23 +84,29 @@
   🔥 <span id="streak">0</span>
 </div>
 
+<button onclick="toggleSound()">🔊 SOUND</button>
+
 <div class="panel">
-  <button class="btn" onclick="selectCategory('strength')">💪 Strength</button>
-  <button class="btn" onclick="selectCategory('stamina')">🫀 Stamina</button>
-  <button class="btn" onclick="selectCategory('agility')">⚡ Agility</button>
+  <button onclick="selectCategory('strength')">Strength</button>
+  <button onclick="selectCategory('stamina')">Stamina</button>
+  <button onclick="selectCategory('agility')">Agility</button>
 </div>
 
 <div class="panel" id="questBoard"></div>
 
 <div class="panel">
   ACTIVE: <span id="activeQuest">None</span><br>
-  <button class="btn" onclick="completeQuest()">COMPLETE QUEST</button>
+  <button onclick="completeQuest()">COMPLETE</button>
 </div>
 
-<!-- AUDIO -->
-<audio id="sfxComplete" src="https://www.myinstants.com/media/sounds/success.mp3"></audio>
-<audio id="sfxLevel" src="https://www.myinstants.com/media/sounds/level-up.mp3"></audio>
-<audio id="sfxClick" src="https://www.myinstants.com/media/sounds/click.mp3"></audio>
+<!-- SPECIAL QUEST -->
+<div id="specialOverlay">
+  <h2 class="glow">⚠️ SPECIAL QUEST ⚠️</h2>
+  <p id="specialText"></p>
+  <p id="specialTimer"></p>
+  <button onclick="acceptSpecial()">ACCEPT</button>
+  <button onclick="declineSpecial()">DECLINE</button>
+</div>
 
 <script>
 
@@ -105,27 +125,27 @@ let selectedCategory = localStorage.getItem("category") || "";
 let activeQuest = localStorage.getItem("activeQuest") || "";
 let questBoard = JSON.parse(localStorage.getItem("questBoard")) || [];
 
+let soundEnabled = localStorage.getItem("sound") !== "off";
+
+/* SPECIAL */
+let lastSpecial = parseInt(localStorage.getItem("lastSpecial")) || 0;
+let specialActive = false;
+
 /* SOUND */
-let soundEnabled = true;
-
-function playSound(id){
-  if(!soundEnabled) return;
-  let s = document.getElementById(id);
-  if(s){
-    s.currentTime = 0;
-    s.play();
-  }
-}
-
 function toggleSound(){
   soundEnabled = !soundEnabled;
-  alert(soundEnabled ? "Sound ON" : "Sound OFF");
+  localStorage.setItem("sound", soundEnabled ? "on":"off");
+  alert(soundEnabled ? "Sound ON":"Sound OFF");
 }
 
-/* SYSTEM */
-function system(msg){
-  document.getElementById("system").innerText = msg;
-  playSound("sfxClick");
+/* VOICE */
+function speak(text){
+  if(!soundEnabled) return;
+  let u = new SpeechSynthesisUtterance(text);
+  u.rate=0.9;
+  u.pitch=0.7;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
 }
 
 /* SAVE */
@@ -144,109 +164,90 @@ function save(){
 
 /* UI */
 function updateUI(){
-  document.getElementById("xp").innerText = xp;
-  document.getElementById("level").innerText = level;
-  document.getElementById("str").innerText = str;
-  document.getElementById("sta").innerText = sta;
-  document.getElementById("agi").innerText = agi;
-  document.getElementById("streak").innerText = streak;
-  document.getElementById("activeQuest").innerText = activeQuest || "None";
+  document.getElementById("xp").innerText=xp;
+  document.getElementById("level").innerText=level;
+  document.getElementById("str").innerText=str;
+  document.getElementById("sta").innerText=sta;
+  document.getElementById("agi").innerText=agi;
+  document.getElementById("streak").innerText=streak;
+  document.getElementById("activeQuest").innerText=activeQuest;
 }
 
-/* DIFFICULTY */
-function scale(base){
-  return Math.floor(base + level * 0.2 * base);
+/* QUEST */
+function getQuests(cat){
+  return ["Easy Task","Medium Task","Hard Task"];
 }
 
-/* QUESTS */
-function getQuests(type){
-
-  if(type==="strength"){
-    return [
-      "Push-ups ("+scale(10)+" reps)",
-      "Squats ("+scale(15)+" reps)",
-      "Plank ("+scale(30)+" sec)"
-    ];
-  }
-
-  if(type==="stamina"){
-    return [
-      "Jog "+(0.3+level*0.05).toFixed(1)+" km",
-      "Walk "+(0.5+level*0.1).toFixed(1)+" km"
-    ];
-  }
-
-  if(type==="agility"){
-    return [
-      "Sprint drills",
-      "Jump training",
-      "Speed walk"
-    ];
-  }
-}
-
-/* CATEGORY */
 function selectCategory(cat){
-  selectedCategory = cat;
-  system("PATH: "+cat.toUpperCase());
+  selectedCategory=cat;
   generateBoard();
   save();
 }
 
-/* BOARD */
 function generateBoard(){
-  let pool = getQuests(selectedCategory);
-  questBoard = [];
-
+  questBoard=[];
+  let pool=getQuests(selectedCategory);
   for(let i=0;i<3;i++){
-    let q = pool[Math.floor(Math.random()*pool.length)];
-    questBoard.push(q);
+    questBoard.push(pool[Math.floor(Math.random()*pool.length)]);
   }
-
   renderBoard();
 }
 
-/* RENDER */
 function renderBoard(){
   let html="";
   questBoard.forEach((q,i)=>{
-    html+=`<div class="quest" onclick="startQuest(${i})">${q}</div>`;
+    html+=`<div class='quest' onclick='startQuest(${i})'>${q}</div>`;
   });
   document.getElementById("questBoard").innerHTML=html;
 }
 
-/* START QUEST */
 function startQuest(i){
-  activeQuest = questBoard[i];
-  system("QUEST STARTED");
-  playSound("sfxClick");
+  activeQuest=questBoard[i];
   save();
   updateUI();
 }
 
-/* COMPLETE */
 function completeQuest(){
-
-  if(!activeQuest) return;
-
   xp+=50;
-
-  if(selectedCategory==="strength") str++;
-  if(selectedCategory==="stamina") sta++;
-  if(selectedCategory==="agility") agi++;
-
-  if(xp>=100){
-    xp-=100;
-    level++;
-    playSound("sfxLevel");
-    system("LEVEL UP!");
-  }
-
-  playSound("sfxComplete");
-
+  if(xp>=100){xp-=100;level++;speak("Level up");}
   activeQuest="";
   generateBoard();
+  save();
+  updateUI();
+}
 
+/* SPECIAL QUEST SYSTEM */
+function trySpecial(){
+
+  let now=Date.now();
+
+  if(now - lastSpecial < 7*24*60*60*1000) return;
+
+  if(Math.random() < 0.15){
+
+    specialActive=true;
+    lastSpecial=now;
+    localStorage.setItem("lastSpecial", lastSpecial);
+
+    document.getElementById("specialOverlay").style.display="flex";
+    document.getElementById("specialText").innerText=
+      "SSS QUEST: Complete 3 quests within 24 hours";
+
+    speak("A special quest has been generated");
+  }
+}
+
+function acceptSpecial(){
+  specialActive=false;
+  document.getElementById("specialOverlay").style.display="none";
+  speak("Quest accepted");
+}
+
+function declineSpecial(){
+  xp=Math.max(0,xp-30);
+  streak=0;
+  document.getElementById("specialOverlay").style.display="none";
+  speak("Penalty applied");
   save();
   updateUI();
 }
@@ -258,7 +259,6 @@ function checkStreak(){
     streak++;
     lastLogin=today;
     xp+=10;
-    system("STREAK +10 XP");
     save();
   }
 }
@@ -267,6 +267,7 @@ function checkStreak(){
 checkStreak();
 updateUI();
 renderBoard();
+trySpecial();
 
 </script>
 
