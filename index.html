@@ -1,30 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ARISE SYSTEM</title>
+  <title>ARISE SYSTEM GPS</title>
   <style>
     body{
       background:black;
       color:#00ffcc;
       text-align:center;
       font-family:Arial;
-      padding-top:50px;
+      padding-top:40px;
     }
 
     .box{
       border:1px solid #00ffcc;
-      margin:20px;
+      margin:15px;
       padding:20px;
       border-radius:10px;
-    }
-
-    button{
-      padding:12px;
-      margin-top:15px;
-      background:#00ffcc;
-      border:none;
-      font-weight:bold;
-      cursor:pointer;
     }
   </style>
 </head>
@@ -39,49 +30,105 @@
 </div>
 
 <div class="box">
-  <h3>Daily Quest</h3>
-  <p>Complete Training Task</p>
-  <button onclick="addXP(); saveData()">COMPLETE QUEST</button>
+  <h3>GPS QUEST: 0.1 KM WALK</h3>
+  <p>Distance: <span id="distance">0</span> km</p>
+  <p id="status">Waiting for GPS...</p>
 </div>
 
 <script>
-let xp = 0;
-let level = 1;
+let xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
+let level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
 
-/* LOAD SAVED DATA */
-function loadData(){
-  xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
-  level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
-}
+let watchId;
+let lastPos = null;
+let totalDistance = 0;
 
-/* SAVE DATA */
+/* SAVE */
 function saveData(){
   localStorage.setItem("xp", xp);
   localStorage.setItem("level", level);
 }
 
-/* ADD XP SYSTEM */
-function addXP(){
-  xp += 20;
-
-  if(xp >= 100){
-    xp = xp - 100;
-    level++;
-    alert("LEVEL UP!");
-  }
-
-  updateUI();
-}
-
-/* UPDATE UI */
+/* UI */
 function updateUI(){
   document.getElementById("xp").innerText = xp;
   document.getElementById("level").innerText = level;
 }
 
+/* DISTANCE CALC */
+function getDistance(lat1, lon1, lat2, lon2){
+  let R = 6371;
+  let dLat = (lat2 - lat1) * Math.PI/180;
+  let dLon = (lon2 - lon1) * Math.PI/180;
+
+  let a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+
+  let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+}
+
+/* COMPLETE QUEST */
+function completeQuest(){
+  xp += 50;
+
+  if(xp >= 100){
+    xp -= 100;
+    level++;
+    alert("LEVEL UP!");
+  }
+
+  saveData();
+  updateUI();
+  document.getElementById("status").innerText = "QUEST COMPLETED!";
+}
+
+/* AUTO GPS START */
+function startGPS(){
+  if(!navigator.geolocation){
+    alert("GPS not supported");
+    return;
+  }
+
+  document.getElementById("status").innerText = "GPS Active...";
+
+  watchId = navigator.geolocation.watchPosition(pos => {
+    let lat = pos.coords.latitude;
+    let lon = pos.coords.longitude;
+
+    if(lastPos){
+      let dist = getDistance(lastPos.lat, lastPos.lon, lat, lon);
+      totalDistance += dist;
+
+      document.getElementById("distance").innerText = totalDistance.toFixed(3);
+
+      if(totalDistance >= 0.1){
+        completeQuest();
+        stopGPS();
+      }
+    }
+
+    lastPos = {lat, lon};
+
+  }, err => {
+    document.getElementById("status").innerText = "Enable GPS Permission!";
+  }, { enableHighAccuracy:true });
+}
+
+/* STOP */
+function stopGPS(){
+  if(watchId){
+    navigator.geolocation.clearWatch(watchId);
+  }
+}
+
 /* INIT */
-loadData();
 updateUI();
+startGPS();
 
 </script>
 
