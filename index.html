@@ -1,421 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ARISE SYSTEM v8.2</title>
+  <title>ARISE SYSTEM v10</title>
 
-<style>
-body{
-  margin:0;
-  background:#000;
-  color:#00ffcc;
-  font-family:Arial;
-  text-align:center;
-}
+  <meta name="theme-color" content="#000000">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-.panel{
-  border:1px solid #00ffcc;
-  margin:10px;
-  padding:10px;
-  border-radius:10px;
-}
+  <link rel="manifest" href="pwa/manifest.json">
 
-.quest{
-  border:1px solid #00ffcc55;
-  margin:5px;
-  padding:10px;
-  cursor:pointer;
-}
+  <style>
+    body{
+      margin:0;
+      background:black;
+      color:#00ffcc;
+      font-family:Arial;
+      text-align:center;
+    }
 
-button{
-  padding:10px;
-  margin:5px;
-}
+    .panel{
+      margin:10px;
+      padding:10px;
+      border:1px solid #00ffcc;
+      border-radius:10px;
+    }
 
-#avatar{
-  width:80px;
-  height:80px;
-  border-radius:50%;
-  border:2px solid #00ffcc;
-  margin:auto;
-  background-size:cover;
-}
-
-/* frames */
-.frame-shadow{ box-shadow:0 0 20px purple; }
-.frame-fire{ box-shadow:0 0 20px red; }
-
-/* special overlay */
-#specialOverlay{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:black;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  z-index:999;
-}
-</style>
-
+    .quest{
+      margin:5px;
+      padding:10px;
+      border:1px solid #00ffcc55;
+      cursor:pointer;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>⚡ ARISE SYSTEM v8.2 ⚡</h1>
+<h2>⚡ ARISE SYSTEM v10 ⚡</h2>
 
-<div class="panel">
-<div id="avatar"></div>
-LEVEL: <span id="level"></span> |
-XP: <span id="xp"></span>
-</div>
-
-<div class="panel">
-💪 <span id="str"></span> |
-🫀 <span id="sta"></span> |
-⚡ <span id="agi"></span> |
-🔥 <span id="streak"></span>
-</div>
-
-<button onclick="toggleSound()">🔊 SOUND</button>
-
-<div class="panel">
-<button onclick="selectCategory('strength')">Strength</button>
-<button onclick="selectCategory('stamina')">Stamina (GPS)</button>
-<button onclick="selectCategory('agility')">Agility</button>
-</div>
-
+<div class="panel" id="stats"></div>
 <div class="panel" id="questBoard"></div>
 
-<div class="panel">
-ACTIVE: <span id="activeQuest">None</span><br>
-<button onclick="completeQuest()">COMPLETE</button>
-</div>
-
-<!-- SPECIAL QUEST -->
-<div id="specialOverlay">
-<h2>⚠️ SPECIAL QUEST ⚠️</h2>
-<p id="specialText"></p>
-<button onclick="acceptSpecial()">ACCEPT</button>
-<button onclick="declineSpecial()">DECLINE</button>
-</div>
-
-<input type="file" id="avatarUpload" style="display:none" onchange="uploadAvatar(event)"/>
-
-<script>
-
-/* ================= DATA ================= */
-let xp = +localStorage.xp || 0;
-let level = +localStorage.level || 1;
-
-let str = +localStorage.str || 1;
-let sta = +localStorage.sta || 1;
-let agi = +localStorage.agi || 1;
-
-let streak = +localStorage.streak || 0;
-let lastLogin = localStorage.lastLogin || "";
-
-let category = localStorage.category || "";
-let activeQuest = localStorage.activeQuest || "";
-let questBoard = JSON.parse(localStorage.questBoard||"[]");
-
-let avatar = localStorage.avatar || "";
-let frame = localStorage.frame || "none";
-let avatarUnlocked = localStorage.avatarUnlocked === "true";
-let ownedFrames = JSON.parse(localStorage.ownedFrames||"[]");
-
-let sound = localStorage.sound !== "off";
-
-/* ================= SOUND ================= */
-function toggleSound(){
-  sound = !sound;
-  localStorage.sound = sound ? "on":"off";
-}
-
-/* ================= ABYSS VOICE ================= */
-function speak(text){
-
-  if(!sound) return;
-
-  let msg = new SpeechSynthesisUtterance(text);
-
-  msg.rate = 0.78;
-  msg.pitch = 0.45;
-  msg.volume = 1;
-
-  let voices = speechSynthesis.getVoices();
-
-  let darkVoice =
-    voices.find(v =>
-      v.name.toLowerCase().includes("david") ||
-      v.name.toLowerCase().includes("male") ||
-      v.lang.includes("en")
-    );
-
-  if(darkVoice) msg.voice = darkVoice;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(msg);
-}
-
-/* ================= SAVE ================= */
-function save(){
-  localStorage.xp=xp;
-  localStorage.level=level;
-  localStorage.str=str;
-  localStorage.sta=sta;
-  localStorage.agi=agi;
-  localStorage.streak=streak;
-  localStorage.lastLogin=lastLogin;
-
-  localStorage.category=category;
-  localStorage.activeQuest=activeQuest;
-  localStorage.questBoard=JSON.stringify(questBoard);
-
-  localStorage.avatar=avatar;
-  localStorage.frame=frame;
-  localStorage.avatarUnlocked=avatarUnlocked;
-  localStorage.ownedFrames=JSON.stringify(ownedFrames);
-}
-
-/* ================= LEVEL SYSTEM ================= */
-function updateLevel(){
-
-  let required = level * 100;
-
-  while(xp >= required){
-    xp -= required;
-    level++;
-    required = level * 100;
-    speak("You have ascended. Level increased.");
-  }
-}
-
-/* ================= UI ================= */
-function updateUI(){
-
-  updateLevel();
-
-  document.getElementById("xp").innerText=xp;
-  document.getElementById("level").innerText=level;
-  document.getElementById("str").innerText=str;
-  document.getElementById("sta").innerText=sta;
-  document.getElementById("agi").innerText=agi;
-  document.getElementById("streak").innerText=streak;
-
-  document.getElementById("activeQuest").innerText=activeQuest;
-
-  let av=document.getElementById("avatar");
-  av.style.backgroundImage = avatar ? `url(${avatar})` : "";
-  av.className = frame;
-}
-
-/* ================= QUEST SYSTEM (NO DUPLICATES FIXED) ================= */
-function getQuests(cat){
-
-  if(cat==="strength"){
-    return [
-      {t:"Push-ups x10",type:"manual"},
-      {t:"Squats x15",type:"manual"},
-      {t:"Plank 30s",type:"manual"}
-    ];
-  }
-
-  if(cat==="stamina"){
-    return [
-      {t:"Walk 0.5km",type:"gps",val:0.5},
-      {t:"Jog 1km",type:"gps",val:1}
-    ];
-  }
-
-  if(cat==="agility"){
-    return [
-      {t:"Jump training",type:"manual"},
-      {t:"Sprint drill",type:"manual"}
-    ];
-  }
-}
-
-/* FIXED UNIQUE GENERATION */
-function generateBoard(){
-
-  let pool = getQuests(category);
-
-  // shuffle
-  pool = pool.sort(()=>Math.random()-0.5);
-
-  questBoard = pool.slice(0,3);
-
-  renderBoard();
-}
-
-function renderBoard(){
-  let html="";
-  questBoard.forEach((q,i)=>{
-    html+=`<div class="quest" onclick="startQuest(${i})">${q.t}</div>`;
-  });
-  document.getElementById("questBoard").innerHTML=html;
-}
-
-/* ================= QUEST START ================= */
-let target=0,total=0,lastPos=null;
-
-function startQuest(i){
-  let q=questBoard[i];
-  activeQuest=q.t;
-
-  if(q.type==="gps"){
-    target=q.val;
-    total=0;
-    speak("GPS mission activated");
-  }
-
-  save();
-  updateUI();
-}
-
-/* ================= COMPLETE ================= */
-function completeQuest(){
-
-  xp+=50;
-
-  if(category==="strength")str++;
-  if(category==="stamina")sta++;
-  if(category==="agility")agi++;
-
-  activeQuest="";
-  generateBoard();
-
-  rewardSystem();
-
-  save();
-  updateUI();
-}
-
-/* ================= GPS ================= */
-navigator.geolocation.watchPosition(p=>{
-
-  if(target<=0)return;
-
-  let lat=p.coords.latitude;
-  let lon=p.coords.longitude;
-
-  if(lastPos){
-    let d=getDist(lastPos.lat,lastPos.lon,lat,lon);
-    if(d<1) total+=d;
-    if(total>=target){
-      target=0;
-      completeQuest();
-    }
-  }
-
-  lastPos={lat,lon};
-
-});
-
-function getDist(a,b,c,d){
-  let R=6371;
-  let dLat=(c-a)*Math.PI/180;
-  let dLon=(d-b)*Math.PI/180;
-  let x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
-}
-
-/* ================= SPECIAL QUEST ================= */
-let lastSpecial = +localStorage.lastSpecial || 0;
-
-function trySpecial(){
-
-  let now=Date.now();
-
-  if(now-lastSpecial < 7*86400000) return;
-
-  if(Math.random()<0.15){
-
-    lastSpecial=now;
-    localStorage.lastSpecial=now;
-
-    document.getElementById("specialOverlay").style.display="flex";
-    document.getElementById("specialText").innerText =
-      "SSSR QUEST: Complete 3 missions in 24h";
-
-    speak("A forbidden mission has appeared");
-  }
-}
-
-function acceptSpecial(){
-  document.getElementById("specialOverlay").style.display="none";
-  speak("Mission accepted");
-}
-
-function declineSpecial(){
-  xp=Math.max(0,xp-30);
-  streak=0;
-  document.getElementById("specialOverlay").style.display="none";
-  speak("Penalty executed");
-  save();updateUI();
-}
-
-/* ================= REWARD SYSTEM ================= */
-function rewardSystem(){
-
-  let diff = window.specialDiff;
-
-  if(diff==="SSSR"){
-
-    if(!avatarUnlocked){
-      avatarUnlocked=true;
-      document.getElementById("avatarUpload").click();
-      speak("Avatar unlock granted");
-    } else {
-      giveFrame("frame-shadow");
-    }
-
-  } else if(diff==="SSS"){
-    giveFrame("frame-fire");
-  }
-
-  window.specialDiff=null;
-}
-
-function giveFrame(f){
-  if(!ownedFrames.includes(f)){
-    ownedFrames.push(f);
-    frame=f;
-  }
-}
-
-/* ================= AVATAR ================= */
-function uploadAvatar(e){
-  let file=e.target.files[0];
-  let r=new FileReader();
-
-  r.onload=()=>{
-    avatar=r.result;
-    save();updateUI();
-  }
-
-  r.readAsDataURL(file);
-}
-
-/* ================= STREAK ================= */
-function checkStreak(){
-  let t=new Date().toDateString();
-
-  if(lastLogin!==t){
-    streak++;
-    lastLogin=t;
-    xp+=10;
-  }
-}
-
-/* ================= INIT ================= */
-checkStreak();
-updateUI();
-generateBoard();
-trySpecial();
-
-</script>
+<button onclick="initGame()">START SYSTEM</button>
+
+<script src="core.js"></script>
+<script src="quests.js"></script>
+<script src="sensor.js"></script>
+<script src="rewards.js"></script>
+<script src="main.js"></script>
 
 </body>
 </html>
