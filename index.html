@@ -1,90 +1,122 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ARISE SYSTEM GPS</title>
+  <title>ARISE SYSTEM</title>
   <style>
     body{
-      background:black;
+      background:#000;
       color:#00ffcc;
-      text-align:center;
       font-family:Arial;
-      padding-top:40px;
-    }
-
-    .box{
-      border:1px solid #00ffcc;
-      margin:15px;
+      text-align:center;
       padding:20px;
-      border-radius:10px;
     }
 
-    h1{
-      margin-bottom:20px;
+    .panel{
+      border:1px solid #00ffcc;
+      border-radius:12px;
+      margin:10px;
+      padding:15px;
+      box-shadow:0 0 10px #00ffcc33;
+    }
+
+    button{
+      background:#00ffcc;
+      border:none;
+      padding:10px;
+      margin:5px;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .quest{
+      margin:5px;
+      padding:10px;
+      border:1px solid #00ffcc55;
+      border-radius:8px;
+    }
+
+    .active{
+      background:#00ffcc22;
     }
   </style>
 </head>
 
 <body>
 
-<h1>ARISE SYSTEM</h1>
+<h1>⚡ ARISE SYSTEM ⚡</h1>
 
-<div class="box">
+<div class="panel">
   <h2>LEVEL: <span id="level">1</span></h2>
   <h2>XP: <span id="xp">0</span> / 100</h2>
 </div>
 
-<div class="box">
-  <h3>GPS QUEST</h3>
-  <p>Target: 0.1 KM WALK</p>
+<div class="panel">
+  <h2>🎯 QUEST SELECT</h2>
+
+  <div class="quest" onclick="setQuest(0.1)">
+    🏃 Walk 0.1 KM
+  </div>
+
+  <div class="quest" onclick="setQuest(0.5)">
+    🚶 Walk 0.5 KM
+  </div>
+
+  <div class="quest" onclick="setQuest(1)">
+    🏃 Run 1 KM
+  </div>
+</div>
+
+<div class="panel">
+  <h2>ACTIVE QUEST</h2>
+  <p id="activeQuest">None</p>
   <p>Distance: <span id="distance">0</span> km</p>
-  <p id="status">Initializing GPS...</p>
+  <p id="status">Select a quest</p>
 </div>
 
 <script>
 
-/* =======================
-   LOAD SAVED DATA
-======================= */
+/* ================= DATA ================= */
 let xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
 let level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
 
-let totalDistance = localStorage.getItem("distance")
-  ? parseFloat(localStorage.getItem("distance"))
-  : 0;
+let totalDistance = localStorage.getItem("distance") ? parseFloat(localStorage.getItem("distance")) : 0;
 
-/* GPS variables */
+let targetDistance = 0;
 let lastPos = null;
 let watchId;
 
-/* =======================
-   SAVE FUNCTIONS
-======================= */
+/* ================= SAVE ================= */
 function saveData(){
   localStorage.setItem("xp", xp);
   localStorage.setItem("level", level);
-}
-
-function saveDistance(){
   localStorage.setItem("distance", totalDistance);
 }
 
-/* =======================
-   UPDATE UI
-======================= */
+/* ================= UI ================= */
 function updateUI(){
   document.getElementById("xp").innerText = xp;
   document.getElementById("level").innerText = level;
   document.getElementById("distance").innerText = totalDistance.toFixed(3);
 }
 
-/* =======================
-   DISTANCE CALC (Haversine)
-======================= */
+/* ================= QUEST SELECT ================= */
+function setQuest(km){
+  targetDistance = km;
+  totalDistance = 0;
+  saveData();
+
+  document.getElementById("activeQuest").innerText =
+    "Complete " + km + " KM quest";
+
+  document.getElementById("status").innerText =
+    "Quest Started... Move now!";
+}
+
+/* ================= DISTANCE ================= */
 function getDistance(lat1, lon1, lat2, lon2){
   const R = 6371;
-
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const dLat = (lat2 - lat1) * Math.PI/180;
+  const dLon = (lon2 - lon1) * Math.PI/180;
 
   const a =
     Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -96,15 +128,11 @@ function getDistance(lat1, lon1, lat2, lon2){
 
   let dist = R * c;
 
-  // noise filter (important)
   if(dist < 0.005) return 0;
-
   return dist;
 }
 
-/* =======================
-   QUEST COMPLETE
-======================= */
+/* ================= QUEST COMPLETE ================= */
 function completeQuest(){
   xp += 50;
 
@@ -117,19 +145,16 @@ function completeQuest(){
   saveData();
   updateUI();
 
-  document.getElementById("status").innerText = "QUEST COMPLETED!";
+  document.getElementById("status").innerText =
+    "QUEST COMPLETE!";
 }
 
-/* =======================
-   GPS START
-======================= */
+/* ================= GPS ================= */
 function startGPS(){
   if(!navigator.geolocation){
     alert("GPS not supported");
     return;
   }
-
-  document.getElementById("status").innerText = "GPS Active...";
 
   watchId = navigator.geolocation.watchPosition(pos => {
 
@@ -139,12 +164,9 @@ function startGPS(){
     if(lastPos){
       let dist = getDistance(lastPos.lat, lastPos.lon, lat, lon);
 
-      // add distance safely
       if(dist > 0 && dist < 1){
         totalDistance += dist;
-
-        // SAVE PROGRESS (IMPORTANT FIX)
-        saveDistance();
+        saveData();
       }
 
       document.getElementById("distance").innerText =
@@ -153,10 +175,9 @@ function startGPS(){
       document.getElementById("status").innerText =
         "Tracking... Keep moving 👣";
 
-      // QUEST CHECK
-      if(totalDistance >= 0.1){
+      if(targetDistance > 0 && totalDistance >= targetDistance){
         completeQuest();
-        stopGPS();
+        targetDistance = 0;
       }
     }
 
@@ -164,22 +185,11 @@ function startGPS(){
 
   }, err => {
     document.getElementById("status").innerText =
-      "Enable GPS Permission!";
+      "Enable GPS permission!";
   }, { enableHighAccuracy:true });
 }
 
-/* =======================
-   STOP GPS
-======================= */
-function stopGPS(){
-  if(watchId){
-    navigator.geolocation.clearWatch(watchId);
-  }
-}
-
-/* =======================
-   INIT
-======================= */
+/* ================= INIT ================= */
 updateUI();
 startGPS();
 
