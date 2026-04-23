@@ -2,42 +2,71 @@
 <html>
 <head>
   <title>ARISE SYSTEM</title>
+
   <style>
     body{
-      background:#000;
+      margin:0;
+      background: radial-gradient(circle at top, #001a1a, #000);
       color:#00ffcc;
       font-family:Arial;
       text-align:center;
-      padding:20px;
     }
 
     h1{
-      margin-bottom:10px;
+      margin-top:15px;
+      text-shadow:0 0 15px #00ffcc;
+      letter-spacing:2px;
     }
 
     .panel{
       border:1px solid #00ffcc;
-      border-radius:12px;
-      margin:10px;
+      border-radius:14px;
+      margin:12px;
       padding:15px;
-      box-shadow:0 0 10px #00ffcc33;
+      box-shadow:0 0 20px #00ffcc22;
+      backdrop-filter: blur(6px);
+      animation: glow 3s infinite alternate;
+    }
+
+    @keyframes glow{
+      from { box-shadow:0 0 10px #00ffcc22; }
+      to   { box-shadow:0 0 25px #00ffcc55; }
+    }
+
+    .bar{
+      width:80%;
+      height:12px;
+      background:#003333;
+      margin:10px auto;
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    .fill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,#00ffcc,#00ffaa);
+      transition:0.3s;
     }
 
     .quest{
-      margin:5px;
+      margin:6px;
       padding:10px;
       border:1px solid #00ffcc55;
-      border-radius:8px;
+      border-radius:10px;
       cursor:pointer;
+      transition:0.2s;
     }
 
-    button{
-      background:#00ffcc;
-      border:none;
-      padding:10px;
-      margin:5px;
+    .quest:hover{
+      background:#00ffcc11;
+      transform:scale(1.03);
+    }
+
+    #systemMsg{
       font-weight:bold;
-      cursor:pointer;
+      text-shadow:0 0 10px #00ffcc;
+      background:#001f1f;
     }
   </style>
 </head>
@@ -46,10 +75,20 @@
 
 <h1>⚡ ARISE SYSTEM ⚡</h1>
 
-<!-- LEVEL + XP -->
+<div class="panel" id="systemMsg">SYSTEM: BOOTING...</div>
+
+<!-- LEVEL -->
 <div class="panel">
-  <h2>LEVEL: <span id="level">1</span></h2>
-  <h2>XP: <span id="xp">0</span> / 100</h2>
+  <h2>LEVEL <span id="level">1</span></h2>
+</div>
+
+<!-- XP BAR -->
+<div class="panel">
+  <h2>XP</h2>
+  <div class="bar">
+    <div class="fill" id="xpBar"></div>
+  </div>
+  <p><span id="xp">0</span> / 100</p>
 </div>
 
 <!-- STATS -->
@@ -58,12 +97,12 @@
   <p>💪 Strength: <span id="str">1</span></p>
   <p>🫀 Stamina: <span id="sta">1</span></p>
   <p>⚡ Agility: <span id="agi">1</span></p>
-  <p>🔥 Streak: <span id="streak">0</span> days</p>
+  <p>🔥 Streak: <span id="streak">0</span></p>
 </div>
 
-<!-- QUESTS -->
+<!-- QUEST -->
 <div class="panel">
-  <h2>🎯 QUEST SELECT</h2>
+  <h2>🎯 QUEST</h2>
 
   <div class="quest" onclick="setQuest(0.1)">
     🏃 Walk 0.1 KM
@@ -88,7 +127,7 @@
 
 <script>
 
-/* ================= LOAD DATA ================= */
+/* ================= DATA ================= */
 let xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
 let level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
 
@@ -101,10 +140,14 @@ let lastLogin = localStorage.getItem("lastLogin") || "";
 
 let totalDistance = localStorage.getItem("distance") ? parseFloat(localStorage.getItem("distance")) : 0;
 
-/* ================= QUEST DATA ================= */
 let targetDistance = 0;
 let lastPos = null;
 let watchId;
+
+/* ================= SYSTEM MSG ================= */
+function systemMessage(msg){
+  document.getElementById("systemMsg").innerText = "SYSTEM: " + msg;
+}
 
 /* ================= SAVE ================= */
 function saveAll(){
@@ -120,20 +163,23 @@ function saveAll(){
 
 /* ================= UI ================= */
 function updateUI(){
-  document.getElementById("xp").innerText = xp;
   document.getElementById("level").innerText = level;
+  document.getElementById("xp").innerText = xp;
 
   document.getElementById("str").innerText = str;
   document.getElementById("sta").innerText = sta;
   document.getElementById("agi").innerText = agi;
-
   document.getElementById("streak").innerText = streak;
 
   document.getElementById("distance").innerText =
     totalDistance.toFixed(3);
+
+  // XP BAR
+  let percent = (xp / 100) * 100;
+  document.getElementById("xpBar").style.width = percent + "%";
 }
 
-/* ================= STREAK SYSTEM ================= */
+/* ================= STREAK ================= */
 function checkStreak(){
   let today = new Date().toDateString();
 
@@ -142,19 +188,17 @@ function checkStreak(){
     lastLogin = today;
 
     let bonus = 10;
-
     if(streak >= 3) bonus = 20;
     if(streak >= 7) bonus = 50;
 
     xp += bonus;
 
-    alert("🔥 DAILY STREAK BONUS: +" + bonus + " XP!");
-
+    systemMessage("DAILY STREAK +" + bonus + " XP");
     saveAll();
   }
 }
 
-/* ================= QUEST SELECT ================= */
+/* ================= QUEST ================= */
 function setQuest(km){
   targetDistance = km;
   totalDistance = 0;
@@ -162,10 +206,9 @@ function setQuest(km){
   saveAll();
 
   document.getElementById("activeQuest").innerText =
-    "Complete " + km + " KM QUEST";
+    km + " KM QUEST";
 
-  document.getElementById("status").innerText =
-    "Quest started... Move!";
+  systemMessage("QUEST INITIALIZED");
 }
 
 /* ================= DISTANCE ================= */
@@ -193,21 +236,21 @@ function getDistance(lat1, lon1, lat2, lon2){
 function completeQuest(){
   xp += 50;
 
-  str += 1;
-  sta += 1;
-  agi += 1;
+  str++;
+  sta++;
+  agi++;
 
   if(xp >= 100){
     xp -= 100;
     level++;
-    alert("LEVEL UP!");
+    systemMessage("LEVEL UP DETECTED ⚡");
   }
 
   saveAll();
   updateUI();
 
-  document.getElementById("status").innerText =
-    "QUEST COMPLETE!";
+  systemMessage("QUEST COMPLETE ✔");
+  document.getElementById("status").innerText = "Completed!";
 }
 
 /* ================= GPS ================= */
@@ -216,6 +259,8 @@ function startGPS(){
     alert("GPS not supported");
     return;
   }
+
+  systemMessage("GPS ONLINE");
 
   watchId = navigator.geolocation.watchPosition(pos => {
 
@@ -234,8 +279,8 @@ function startGPS(){
         totalDistance.toFixed(3);
 
       document.getElementById("status").innerText =
-        "Tracking... Keep moving 👣";
-
+        "Tracking...";
+      
       if(targetDistance > 0 && totalDistance >= targetDistance){
         completeQuest();
         targetDistance = 0;
@@ -245,8 +290,7 @@ function startGPS(){
     lastPos = {lat, lon};
 
   }, err => {
-    document.getElementById("status").innerText =
-      "Enable GPS permission!";
+    systemMessage("GPS PERMISSION REQUIRED");
   }, { enableHighAccuracy:true });
 }
 
