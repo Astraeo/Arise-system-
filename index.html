@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ARISE SYSTEM</title>
+  <title>ARISE SYSTEM v8</title>
 
   <style>
     body{
@@ -31,57 +31,48 @@
       margin:5px;
     }
 
-    /* CINEMATIC */
-    #specialOverlay{
-      position:fixed;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      background:black;
-      color:#00ffcc;
-      display:none;
-      justify-content:center;
-      align-items:center;
-      flex-direction:column;
-      z-index:999;
-      text-align:center;
-    }
-
-    .glow{
-      text-shadow:0 0 20px #00ffcc;
-    }
-
-    /* AVATAR */
     #avatar{
       width:80px;
       height:80px;
       border-radius:50%;
       border:2px solid #00ffcc;
       margin:auto;
+      background-size:cover;
     }
 
-    .frame-dark{
-      box-shadow:0 0 20px purple;
-    }
+    .frame-shadow{ box-shadow:0 0 20px purple; }
+    .frame-fire{ box-shadow:0 0 20px red; }
 
+    /* SPECIAL */
+    #specialOverlay{
+      position:fixed;
+      top:0;left:0;
+      width:100%;height:100%;
+      background:black;
+      display:none;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+      z-index:999;
+    }
   </style>
 </head>
 
 <body>
 
-<h1>⚡ ARISE SYSTEM ⚡</h1>
+<h1>⚡ ARISE SYSTEM v8 ⚡</h1>
 
 <div class="panel">
   <div id="avatar"></div>
-  <p>LEVEL: <span id="level">1</span> | XP: <span id="xp">0</span></p>
+  LEVEL: <span id="level"></span> |
+  XP: <span id="xp"></span>
 </div>
 
 <div class="panel">
-  💪 <span id="str">1</span> |
-  🫀 <span id="sta">1</span> |
-  ⚡ <span id="agi">1</span> |
-  🔥 <span id="streak">0</span>
+  💪 <span id="str"></span> |
+  🫀 <span id="sta"></span> |
+  ⚡ <span id="agi"></span> |
+  🔥 <span id="streak"></span>
 </div>
 
 <button onclick="toggleSound()">🔊 SOUND</button>
@@ -101,69 +92,76 @@
 
 <!-- SPECIAL QUEST -->
 <div id="specialOverlay">
-  <h2 class="glow">⚠️ SPECIAL QUEST ⚠️</h2>
+  <h2>⚠️ SPECIAL QUEST ⚠️</h2>
   <p id="specialText"></p>
-  <p id="specialTimer"></p>
   <button onclick="acceptSpecial()">ACCEPT</button>
   <button onclick="declineSpecial()">DECLINE</button>
 </div>
 
+<input type="file" id="avatarUpload" style="display:none" onchange="uploadAvatar(event)"/>
+
 <script>
 
-/* DATA */
-let xp = parseInt(localStorage.getItem("xp")) || 0;
-let level = parseInt(localStorage.getItem("level")) || 1;
+/* ================= DATA ================= */
+let xp = +localStorage.xp || 0;
+let level = +localStorage.level || 1;
 
-let str = parseInt(localStorage.getItem("str")) || 1;
-let sta = parseInt(localStorage.getItem("sta")) || 1;
-let agi = parseInt(localStorage.getItem("agi")) || 1;
+let str = +localStorage.str || 1;
+let sta = +localStorage.sta || 1;
+let agi = +localStorage.agi || 1;
 
-let streak = parseInt(localStorage.getItem("streak")) || 0;
-let lastLogin = localStorage.getItem("lastLogin") || "";
+let streak = +localStorage.streak || 0;
+let lastLogin = localStorage.lastLogin || "";
 
-let selectedCategory = localStorage.getItem("category") || "";
-let activeQuest = localStorage.getItem("activeQuest") || "";
-let questBoard = JSON.parse(localStorage.getItem("questBoard")) || [];
+let category = localStorage.category || "";
+let activeQuest = localStorage.activeQuest || "";
+let questBoard = JSON.parse(localStorage.questBoard||"[]");
 
-let soundEnabled = localStorage.getItem("sound") !== "off";
+let avatar = localStorage.avatar || "";
+let frame = localStorage.frame || "none";
+let avatarUnlocked = localStorage.avatarUnlocked === "true";
+let ownedFrames = JSON.parse(localStorage.ownedFrames||"[]");
 
-/* SPECIAL */
-let lastSpecial = parseInt(localStorage.getItem("lastSpecial")) || 0;
-let specialActive = false;
+let sound = localStorage.sound !== "off";
 
-/* SOUND */
+/* ================= SOUND ================= */
 function toggleSound(){
-  soundEnabled = !soundEnabled;
-  localStorage.setItem("sound", soundEnabled ? "on":"off");
-  alert(soundEnabled ? "Sound ON":"Sound OFF");
+  sound = !sound;
+  localStorage.sound = sound ? "on":"off";
 }
 
-/* VOICE */
-function speak(text){
-  if(!soundEnabled) return;
-  let u = new SpeechSynthesisUtterance(text);
-  u.rate=0.9;
-  u.pitch=0.7;
+/* ================= VOICE ================= */
+function speak(t){
+  if(!sound) return;
+  let u=new SpeechSynthesisUtterance(t);
+  u.rate=0.9;u.pitch=0.7;
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
-/* SAVE */
+/* ================= SAVE ================= */
 function save(){
-  localStorage.setItem("xp", xp);
-  localStorage.setItem("level", level);
-  localStorage.setItem("str", str);
-  localStorage.setItem("sta", sta);
-  localStorage.setItem("agi", agi);
-  localStorage.setItem("streak", streak);
-  localStorage.setItem("lastLogin", lastLogin);
-  localStorage.setItem("category", selectedCategory);
-  localStorage.setItem("activeQuest", activeQuest);
-  localStorage.setItem("questBoard", JSON.stringify(questBoard));
+  localStorage.xp=xp;
+  localStorage.level=level;
+  localStorage.str=str;
+  localStorage.sta=sta;
+  localStorage.agi=agi;
+  localStorage.streak=streak;
+  localStorage.lastLogin=lastLogin;
+  localStorage.category=category;
+  localStorage.activeQuest=activeQuest;
+  localStorage.questBoard=JSON.stringify(questBoard);
+
+  localStorage.avatar=avatar;
+  localStorage.frame=frame;
+  localStorage.avatarUnlocked=avatarUnlocked;
+  localStorage.ownedFrames=JSON.stringify(ownedFrames);
 }
 
-/* UI */
+/* ================= UI ================= */
 function updateUI(){
+  xp>=100 && (xp-=100,level++,speak("Level up"));
+
   document.getElementById("xp").innerText=xp;
   document.getElementById("level").innerText=level;
   document.getElementById("str").innerText=str;
@@ -171,22 +169,39 @@ function updateUI(){
   document.getElementById("agi").innerText=agi;
   document.getElementById("streak").innerText=streak;
   document.getElementById("activeQuest").innerText=activeQuest;
+
+  let av=document.getElementById("avatar");
+  av.style.backgroundImage = avatar ? `url(${avatar})` : "";
+  av.className = frame;
 }
 
-/* QUEST */
+/* ================= QUEST ================= */
+function scale(b){return Math.floor(b + level*0.2*b);}
+
 function getQuests(cat){
-  return ["Easy Task","Medium Task","Hard Task"];
+  if(cat==="strength") return [
+    {t:`Push-ups (${scale(10)})`,type:"manual"},
+    {t:`Squats (${scale(15)})`,type:"manual"}
+  ];
+
+  if(cat==="stamina") return [
+    {t:`Walk ${(0.5+level*0.1).toFixed(1)}km`,type:"gps",val:(0.5+level*0.1)}
+  ];
+
+  if(cat==="agility") return [
+    {t:`Jump x${scale(30)}`,type:"manual"}
+  ];
 }
 
-function selectCategory(cat){
-  selectedCategory=cat;
+function selectCategory(c){
+  category=c;
   generateBoard();
   save();
 }
 
 function generateBoard(){
+  let pool=getQuests(category);
   questBoard=[];
-  let pool=getQuests(selectedCategory);
   for(let i=0;i<3;i++){
     questBoard.push(pool[Math.floor(Math.random()*pool.length)]);
   }
@@ -194,53 +209,85 @@ function generateBoard(){
 }
 
 function renderBoard(){
-  let html="";
+  let h="";
   questBoard.forEach((q,i)=>{
-    html+=`<div class='quest' onclick='startQuest(${i})'>${q}</div>`;
+    h+=`<div class="quest" onclick="startQuest(${i})">${q.t}</div>`;
   });
-  document.getElementById("questBoard").innerHTML=html;
+  document.getElementById("questBoard").innerHTML=h;
 }
 
+let target=0,total=0,lastPos=null;
+
 function startQuest(i){
-  activeQuest=questBoard[i];
-  save();
-  updateUI();
+  let q=questBoard[i];
+  activeQuest=q.t;
+  if(q.type==="gps"){target=q.val;total=0;}
+  save();updateUI();
 }
 
 function completeQuest(){
+  if(!activeQuest) return;
+
   xp+=50;
-  if(xp>=100){xp-=100;level++;speak("Level up");}
+  if(category==="strength")str++;
+  if(category==="stamina")sta++;
+  if(category==="agility")agi++;
+
   activeQuest="";
   generateBoard();
-  save();
-  updateUI();
+
+  rewardCheck();
+
+  save();updateUI();
 }
 
-/* SPECIAL QUEST SYSTEM */
+/* ================= GPS ================= */
+navigator.geolocation.watchPosition(p=>{
+  if(target<=0)return;
+
+  let lat=p.coords.latitude,lon=p.coords.longitude;
+
+  if(lastPos){
+    let d=getDist(lastPos.lat,lastPos.lon,lat,lon);
+    if(d<1) total+=d;
+    if(total>=target){target=0;completeQuest();}
+  }
+  lastPos={lat,lon};
+});
+
+function getDist(a,b,c,d){
+  let R=6371;
+  let dLat=(c-a)*Math.PI/180;
+  let dLon=(d-b)*Math.PI/180;
+  let x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+/* ================= SPECIAL ================= */
+let lastSpecial=+localStorage.lastSpecial||0;
+
 function trySpecial(){
-
   let now=Date.now();
+  if(now-lastSpecial<7*86400000)return;
 
-  if(now - lastSpecial < 7*24*60*60*1000) return;
-
-  if(Math.random() < 0.15){
-
-    specialActive=true;
+  if(Math.random()<0.15){
     lastSpecial=now;
-    localStorage.setItem("lastSpecial", lastSpecial);
+    localStorage.lastSpecial=now;
+
+    let diff=["S","SS","SSS","SSSR"][Math.floor(Math.random()*4)];
 
     document.getElementById("specialOverlay").style.display="flex";
     document.getElementById("specialText").innerText=
-      "SSS QUEST: Complete 3 quests within 24 hours";
+      diff+" QUEST: Complete 3 tasks";
 
-    speak("A special quest has been generated");
+    window.currentDiff=diff;
+    speak("Special quest generated");
   }
 }
 
 function acceptSpecial(){
-  specialActive=false;
   document.getElementById("specialOverlay").style.display="none";
-  speak("Quest accepted");
+  speak("Accepted");
 }
 
 function declineSpecial(){
@@ -248,18 +295,51 @@ function declineSpecial(){
   streak=0;
   document.getElementById("specialOverlay").style.display="none";
   speak("Penalty applied");
-  save();
-  updateUI();
+  save();updateUI();
 }
 
-/* STREAK */
+/* ================= REWARDS ================= */
+function rewardCheck(){
+  let d=window.currentDiff;
+  if(!d) return;
+
+  if(d==="SSSR"){
+    if(!avatarUnlocked){
+      avatarUnlocked=true;
+      document.getElementById("avatarUpload").click();
+    } else giveFrame("frame-shadow");
+  } else if(d==="SSS"){
+    giveFrame("frame-fire");
+  }
+
+  window.currentDiff=null;
+}
+
+function giveFrame(f){
+  if(!ownedFrames.includes(f)){
+    ownedFrames.push(f);
+    frame=f;
+  }
+}
+
+/* ================= AVATAR ================= */
+function uploadAvatar(e){
+  let file=e.target.files[0];
+  let reader=new FileReader();
+  reader.onload=()=>{
+    avatar=reader.result;
+    save();updateUI();
+  }
+  reader.readAsDataURL(file);
+}
+
+/* ================= STREAK ================= */
 function checkStreak(){
-  let today=new Date().toDateString();
-  if(lastLogin!==today){
+  let t=new Date().toDateString();
+  if(lastLogin!==t){
     streak++;
-    lastLogin=today;
+    lastLogin=t;
     xp+=10;
-    save();
   }
 }
 
