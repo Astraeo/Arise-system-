@@ -11,6 +11,10 @@
       padding:20px;
     }
 
+    h1{
+      margin-bottom:10px;
+    }
+
     .panel{
       border:1px solid #00ffcc;
       border-radius:12px;
@@ -33,6 +37,7 @@
       padding:10px;
       margin:5px;
       font-weight:bold;
+      cursor:pointer;
     }
   </style>
 </head>
@@ -41,7 +46,7 @@
 
 <h1>⚡ ARISE SYSTEM ⚡</h1>
 
-<!-- LEVEL / XP -->
+<!-- LEVEL + XP -->
 <div class="panel">
   <h2>LEVEL: <span id="level">1</span></h2>
   <h2>XP: <span id="xp">0</span> / 100</h2>
@@ -53,21 +58,22 @@
   <p>💪 Strength: <span id="str">1</span></p>
   <p>🫀 Stamina: <span id="sta">1</span></p>
   <p>⚡ Agility: <span id="agi">1</span></p>
+  <p>🔥 Streak: <span id="streak">0</span> days</p>
 </div>
 
-<!-- QUEST -->
+<!-- QUESTS -->
 <div class="panel">
   <h2>🎯 QUEST SELECT</h2>
 
-  <div class="quest" onclick="setQuest(0.1,'run')">
-    🏃 Run 0.1 KM
+  <div class="quest" onclick="setQuest(0.1)">
+    🏃 Walk 0.1 KM
   </div>
 
-  <div class="quest" onclick="setQuest(0.5,'walk')">
+  <div class="quest" onclick="setQuest(0.5)">
     🚶 Walk 0.5 KM
   </div>
 
-  <div class="quest" onclick="setQuest(1,'run')">
+  <div class="quest" onclick="setQuest(1)">
     🏃 Run 1 KM
   </div>
 </div>
@@ -82,7 +88,7 @@
 
 <script>
 
-/* ================= DATA ================= */
+/* ================= LOAD DATA ================= */
 let xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
 let level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
 
@@ -90,8 +96,12 @@ let str = localStorage.getItem("str") ? parseInt(localStorage.getItem("str")) : 
 let sta = localStorage.getItem("sta") ? parseInt(localStorage.getItem("sta")) : 1;
 let agi = localStorage.getItem("agi") ? parseInt(localStorage.getItem("agi")) : 1;
 
+let streak = localStorage.getItem("streak") ? parseInt(localStorage.getItem("streak")) : 0;
+let lastLogin = localStorage.getItem("lastLogin") || "";
+
 let totalDistance = localStorage.getItem("distance") ? parseFloat(localStorage.getItem("distance")) : 0;
 
+/* ================= QUEST DATA ================= */
 let targetDistance = 0;
 let lastPos = null;
 let watchId;
@@ -103,6 +113,8 @@ function saveAll(){
   localStorage.setItem("str", str);
   localStorage.setItem("sta", sta);
   localStorage.setItem("agi", agi);
+  localStorage.setItem("streak", streak);
+  localStorage.setItem("lastLogin", lastLogin);
   localStorage.setItem("distance", totalDistance);
 }
 
@@ -115,18 +127,42 @@ function updateUI(){
   document.getElementById("sta").innerText = sta;
   document.getElementById("agi").innerText = agi;
 
-  document.getElementById("distance").innerText = totalDistance.toFixed(3);
+  document.getElementById("streak").innerText = streak;
+
+  document.getElementById("distance").innerText =
+    totalDistance.toFixed(3);
 }
 
-/* ================= QUEST ================= */
-function setQuest(km, type){
+/* ================= STREAK SYSTEM ================= */
+function checkStreak(){
+  let today = new Date().toDateString();
+
+  if(lastLogin !== today){
+    streak += 1;
+    lastLogin = today;
+
+    let bonus = 10;
+
+    if(streak >= 3) bonus = 20;
+    if(streak >= 7) bonus = 50;
+
+    xp += bonus;
+
+    alert("🔥 DAILY STREAK BONUS: +" + bonus + " XP!");
+
+    saveAll();
+  }
+}
+
+/* ================= QUEST SELECT ================= */
+function setQuest(km){
   targetDistance = km;
   totalDistance = 0;
 
   saveAll();
 
   document.getElementById("activeQuest").innerText =
-    type.toUpperCase() + " " + km + " KM QUEST";
+    "Complete " + km + " KM QUEST";
 
   document.getElementById("status").innerText =
     "Quest started... Move!";
@@ -153,8 +189,8 @@ function getDistance(lat1, lon1, lat2, lon2){
   return dist;
 }
 
-/* ================= LEVEL + STATS ================= */
-function gainRewards(){
+/* ================= QUEST COMPLETE ================= */
+function completeQuest(){
   xp += 50;
 
   str += 1;
@@ -169,6 +205,9 @@ function gainRewards(){
 
   saveAll();
   updateUI();
+
+  document.getElementById("status").innerText =
+    "QUEST COMPLETE!";
 }
 
 /* ================= GPS ================= */
@@ -198,11 +237,8 @@ function startGPS(){
         "Tracking... Keep moving 👣";
 
       if(targetDistance > 0 && totalDistance >= targetDistance){
-        gainRewards();
+        completeQuest();
         targetDistance = 0;
-
-        document.getElementById("status").innerText =
-          "QUEST COMPLETE!";
       }
     }
 
@@ -216,6 +252,7 @@ function startGPS(){
 
 /* ================= INIT ================= */
 updateUI();
+checkStreak();
 startGPS();
 
 </script>
