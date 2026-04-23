@@ -1,101 +1,103 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ARISE SYSTEM v8</title>
+<title>ARISE SYSTEM v8.2</title>
 
-  <style>
-    body{
-      margin:0;
-      background:black;
-      color:#00ffcc;
-      font-family:Arial;
-      text-align:center;
-    }
+<style>
+body{
+  margin:0;
+  background:#000;
+  color:#00ffcc;
+  font-family:Arial;
+  text-align:center;
+}
 
-    .panel{
-      border:1px solid #00ffcc;
-      margin:10px;
-      padding:10px;
-      border-radius:10px;
-    }
+.panel{
+  border:1px solid #00ffcc;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+}
 
-    .quest{
-      border:1px solid #00ffcc55;
-      margin:5px;
-      padding:10px;
-      cursor:pointer;
-    }
+.quest{
+  border:1px solid #00ffcc55;
+  margin:5px;
+  padding:10px;
+  cursor:pointer;
+}
 
-    button{
-      padding:10px;
-      margin:5px;
-    }
+button{
+  padding:10px;
+  margin:5px;
+}
 
-    #avatar{
-      width:80px;
-      height:80px;
-      border-radius:50%;
-      border:2px solid #00ffcc;
-      margin:auto;
-      background-size:cover;
-    }
+#avatar{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  border:2px solid #00ffcc;
+  margin:auto;
+  background-size:cover;
+}
 
-    .frame-shadow{ box-shadow:0 0 20px purple; }
-    .frame-fire{ box-shadow:0 0 20px red; }
+/* frames */
+.frame-shadow{ box-shadow:0 0 20px purple; }
+.frame-fire{ box-shadow:0 0 20px red; }
 
-    /* SPECIAL */
-    #specialOverlay{
-      position:fixed;
-      top:0;left:0;
-      width:100%;height:100%;
-      background:black;
-      display:none;
-      justify-content:center;
-      align-items:center;
-      flex-direction:column;
-      z-index:999;
-    }
-  </style>
+/* special overlay */
+#specialOverlay{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:black;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  z-index:999;
+}
+</style>
+
 </head>
 
 <body>
 
-<h1>⚡ ARISE SYSTEM v8 ⚡</h1>
+<h1>⚡ ARISE SYSTEM v8.2 ⚡</h1>
 
 <div class="panel">
-  <div id="avatar"></div>
-  LEVEL: <span id="level"></span> |
-  XP: <span id="xp"></span>
+<div id="avatar"></div>
+LEVEL: <span id="level"></span> |
+XP: <span id="xp"></span>
 </div>
 
 <div class="panel">
-  💪 <span id="str"></span> |
-  🫀 <span id="sta"></span> |
-  ⚡ <span id="agi"></span> |
-  🔥 <span id="streak"></span>
+💪 <span id="str"></span> |
+🫀 <span id="sta"></span> |
+⚡ <span id="agi"></span> |
+🔥 <span id="streak"></span>
 </div>
 
 <button onclick="toggleSound()">🔊 SOUND</button>
 
 <div class="panel">
-  <button onclick="selectCategory('strength')">Strength</button>
-  <button onclick="selectCategory('stamina')">Stamina</button>
-  <button onclick="selectCategory('agility')">Agility</button>
+<button onclick="selectCategory('strength')">Strength</button>
+<button onclick="selectCategory('stamina')">Stamina (GPS)</button>
+<button onclick="selectCategory('agility')">Agility</button>
 </div>
 
 <div class="panel" id="questBoard"></div>
 
 <div class="panel">
-  ACTIVE: <span id="activeQuest">None</span><br>
-  <button onclick="completeQuest()">COMPLETE</button>
+ACTIVE: <span id="activeQuest">None</span><br>
+<button onclick="completeQuest()">COMPLETE</button>
 </div>
 
 <!-- SPECIAL QUEST -->
 <div id="specialOverlay">
-  <h2>⚠️ SPECIAL QUEST ⚠️</h2>
-  <p id="specialText"></p>
-  <button onclick="acceptSpecial()">ACCEPT</button>
-  <button onclick="declineSpecial()">DECLINE</button>
+<h2>⚠️ SPECIAL QUEST ⚠️</h2>
+<p id="specialText"></p>
+<button onclick="acceptSpecial()">ACCEPT</button>
+<button onclick="declineSpecial()">DECLINE</button>
 </div>
 
 <input type="file" id="avatarUpload" style="display:none" onchange="uploadAvatar(event)"/>
@@ -130,13 +132,30 @@ function toggleSound(){
   localStorage.sound = sound ? "on":"off";
 }
 
-/* ================= VOICE ================= */
-function speak(t){
+/* ================= ABYSS VOICE ================= */
+function speak(text){
+
   if(!sound) return;
-  let u=new SpeechSynthesisUtterance(t);
-  u.rate=0.9;u.pitch=0.7;
+
+  let msg = new SpeechSynthesisUtterance(text);
+
+  msg.rate = 0.78;
+  msg.pitch = 0.45;
+  msg.volume = 1;
+
+  let voices = speechSynthesis.getVoices();
+
+  let darkVoice =
+    voices.find(v =>
+      v.name.toLowerCase().includes("david") ||
+      v.name.toLowerCase().includes("male") ||
+      v.lang.includes("en")
+    );
+
+  if(darkVoice) msg.voice = darkVoice;
+
   speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  speechSynthesis.speak(msg);
 }
 
 /* ================= SAVE ================= */
@@ -148,6 +167,7 @@ function save(){
   localStorage.agi=agi;
   localStorage.streak=streak;
   localStorage.lastLogin=lastLogin;
+
   localStorage.category=category;
   localStorage.activeQuest=activeQuest;
   localStorage.questBoard=JSON.stringify(questBoard);
@@ -158,9 +178,23 @@ function save(){
   localStorage.ownedFrames=JSON.stringify(ownedFrames);
 }
 
+/* ================= LEVEL SYSTEM ================= */
+function updateLevel(){
+
+  let required = level * 100;
+
+  while(xp >= required){
+    xp -= required;
+    level++;
+    required = level * 100;
+    speak("You have ascended. Level increased.");
+  }
+}
+
 /* ================= UI ================= */
 function updateUI(){
-  xp>=100 && (xp-=100,level++,speak("Level up"));
+
+  updateLevel();
 
   document.getElementById("xp").innerText=xp;
   document.getElementById("level").innerText=level;
@@ -168,6 +202,7 @@ function updateUI(){
   document.getElementById("sta").innerText=sta;
   document.getElementById("agi").innerText=agi;
   document.getElementById("streak").innerText=streak;
+
   document.getElementById("activeQuest").innerText=activeQuest;
 
   let av=document.getElementById("avatar");
@@ -175,60 +210,75 @@ function updateUI(){
   av.className = frame;
 }
 
-/* ================= QUEST ================= */
-function scale(b){return Math.floor(b + level*0.2*b);}
-
+/* ================= QUEST SYSTEM (NO DUPLICATES FIXED) ================= */
 function getQuests(cat){
-  if(cat==="strength") return [
-    {t:`Push-ups (${scale(10)})`,type:"manual"},
-    {t:`Squats (${scale(15)})`,type:"manual"}
-  ];
 
-  if(cat==="stamina") return [
-    {t:`Walk ${(0.5+level*0.1).toFixed(1)}km`,type:"gps",val:(0.5+level*0.1)}
-  ];
-
-  if(cat==="agility") return [
-    {t:`Jump x${scale(30)}`,type:"manual"}
-  ];
-}
-
-function selectCategory(c){
-  category=c;
-  generateBoard();
-  save();
-}
-
-function generateBoard(){
-  let pool=getQuests(category);
-  questBoard=[];
-  for(let i=0;i<3;i++){
-    questBoard.push(pool[Math.floor(Math.random()*pool.length)]);
+  if(cat==="strength"){
+    return [
+      {t:"Push-ups x10",type:"manual"},
+      {t:"Squats x15",type:"manual"},
+      {t:"Plank 30s",type:"manual"}
+    ];
   }
+
+  if(cat==="stamina"){
+    return [
+      {t:"Walk 0.5km",type:"gps",val:0.5},
+      {t:"Jog 1km",type:"gps",val:1}
+    ];
+  }
+
+  if(cat==="agility"){
+    return [
+      {t:"Jump training",type:"manual"},
+      {t:"Sprint drill",type:"manual"}
+    ];
+  }
+}
+
+/* FIXED UNIQUE GENERATION */
+function generateBoard(){
+
+  let pool = getQuests(category);
+
+  // shuffle
+  pool = pool.sort(()=>Math.random()-0.5);
+
+  questBoard = pool.slice(0,3);
+
   renderBoard();
 }
 
 function renderBoard(){
-  let h="";
+  let html="";
   questBoard.forEach((q,i)=>{
-    h+=`<div class="quest" onclick="startQuest(${i})">${q.t}</div>`;
+    html+=`<div class="quest" onclick="startQuest(${i})">${q.t}</div>`;
   });
-  document.getElementById("questBoard").innerHTML=h;
+  document.getElementById("questBoard").innerHTML=html;
 }
 
+/* ================= QUEST START ================= */
 let target=0,total=0,lastPos=null;
 
 function startQuest(i){
   let q=questBoard[i];
   activeQuest=q.t;
-  if(q.type==="gps"){target=q.val;total=0;}
-  save();updateUI();
+
+  if(q.type==="gps"){
+    target=q.val;
+    total=0;
+    speak("GPS mission activated");
+  }
+
+  save();
+  updateUI();
 }
 
+/* ================= COMPLETE ================= */
 function completeQuest(){
-  if(!activeQuest) return;
 
   xp+=50;
+
   if(category==="strength")str++;
   if(category==="stamina")sta++;
   if(category==="agility")agi++;
@@ -236,23 +286,31 @@ function completeQuest(){
   activeQuest="";
   generateBoard();
 
-  rewardCheck();
+  rewardSystem();
 
-  save();updateUI();
+  save();
+  updateUI();
 }
 
 /* ================= GPS ================= */
 navigator.geolocation.watchPosition(p=>{
+
   if(target<=0)return;
 
-  let lat=p.coords.latitude,lon=p.coords.longitude;
+  let lat=p.coords.latitude;
+  let lon=p.coords.longitude;
 
   if(lastPos){
     let d=getDist(lastPos.lat,lastPos.lon,lat,lon);
     if(d<1) total+=d;
-    if(total>=target){target=0;completeQuest();}
+    if(total>=target){
+      target=0;
+      completeQuest();
+    }
   }
+
   lastPos={lat,lon};
+
 });
 
 function getDist(a,b,c,d){
@@ -263,56 +321,61 @@ function getDist(a,b,c,d){
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
-/* ================= SPECIAL ================= */
-let lastSpecial=+localStorage.lastSpecial||0;
+/* ================= SPECIAL QUEST ================= */
+let lastSpecial = +localStorage.lastSpecial || 0;
 
 function trySpecial(){
+
   let now=Date.now();
-  if(now-lastSpecial<7*86400000)return;
+
+  if(now-lastSpecial < 7*86400000) return;
 
   if(Math.random()<0.15){
+
     lastSpecial=now;
     localStorage.lastSpecial=now;
 
-    let diff=["S","SS","SSS","SSSR"][Math.floor(Math.random()*4)];
-
     document.getElementById("specialOverlay").style.display="flex";
-    document.getElementById("specialText").innerText=
-      diff+" QUEST: Complete 3 tasks";
+    document.getElementById("specialText").innerText =
+      "SSSR QUEST: Complete 3 missions in 24h";
 
-    window.currentDiff=diff;
-    speak("Special quest generated");
+    speak("A forbidden mission has appeared");
   }
 }
 
 function acceptSpecial(){
   document.getElementById("specialOverlay").style.display="none";
-  speak("Accepted");
+  speak("Mission accepted");
 }
 
 function declineSpecial(){
   xp=Math.max(0,xp-30);
   streak=0;
   document.getElementById("specialOverlay").style.display="none";
-  speak("Penalty applied");
+  speak("Penalty executed");
   save();updateUI();
 }
 
-/* ================= REWARDS ================= */
-function rewardCheck(){
-  let d=window.currentDiff;
-  if(!d) return;
+/* ================= REWARD SYSTEM ================= */
+function rewardSystem(){
 
-  if(d==="SSSR"){
+  let diff = window.specialDiff;
+
+  if(diff==="SSSR"){
+
     if(!avatarUnlocked){
       avatarUnlocked=true;
       document.getElementById("avatarUpload").click();
-    } else giveFrame("frame-shadow");
-  } else if(d==="SSS"){
+      speak("Avatar unlock granted");
+    } else {
+      giveFrame("frame-shadow");
+    }
+
+  } else if(diff==="SSS"){
     giveFrame("frame-fire");
   }
 
-  window.currentDiff=null;
+  window.specialDiff=null;
 }
 
 function giveFrame(f){
@@ -325,17 +388,20 @@ function giveFrame(f){
 /* ================= AVATAR ================= */
 function uploadAvatar(e){
   let file=e.target.files[0];
-  let reader=new FileReader();
-  reader.onload=()=>{
-    avatar=reader.result;
+  let r=new FileReader();
+
+  r.onload=()=>{
+    avatar=r.result;
     save();updateUI();
   }
-  reader.readAsDataURL(file);
+
+  r.readAsDataURL(file);
 }
 
 /* ================= STREAK ================= */
 function checkStreak(){
   let t=new Date().toDateString();
+
   if(lastLogin!==t){
     streak++;
     lastLogin=t;
@@ -343,10 +409,10 @@ function checkStreak(){
   }
 }
 
-/* INIT */
+/* ================= INIT ================= */
 checkStreak();
 updateUI();
-renderBoard();
+generateBoard();
 trySpecial();
 
 </script>
