@@ -1,4 +1,5 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
   <title>ARISE SYSTEM</title>
   <style>
@@ -8,34 +9,81 @@
       text-align:center;
       font-family:Arial;
       padding-top:50px;
-    }button{
-  padding:10px;
-  margin-top:20px;
-  background:#00ffcc;
-  border:none;
-  font-weight:bold;
-}
+    }
 
+    .box{
+      border:1px solid #00ffcc;
+      margin:20px;
+      padding:20px;
+      border-radius:10px;
+    }
+
+    button{
+      padding:12px;
+      margin-top:15px;
+      background:#00ffcc;
+      border:none;
+      font-weight:bold;
+      cursor:pointer;
+    }
   </style>
 </head>
-<body><h1>ARISE SYSTEM</h1><h2>Level: <span id="level">1</span></h2>
-<h2>XP: <span id="xp">0</span></h2><button onclick="addXP()">Complete Quest</button>
+
+<body>
+
+<h1>ARISE SYSTEM</h1>
+
+<div class="box">
+  <h2>LEVEL: <span id="level">1</span></h2>
+  <h2>XP: <span id="xp">0</span> / 100</h2>
+</div>
+
+<div class="box">
+  <h3>Daily Quest</h3>
+  <p>Complete Training Task</p>
+  <button onclick="addXP(); saveData()">COMPLETE QUEST</button>
+</div>
 
 <script>
 let xp = 0;
 let level = 1;
 
+/* LOAD SAVED DATA */
+function loadData(){
+  xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
+  level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
+}
+
+/* SAVE DATA */
+function saveData(){
+  localStorage.setItem("xp", xp);
+  localStorage.setItem("level", level);
+}
+
+/* ADD XP SYSTEM */
 function addXP(){
   xp += 20;
 
   if(xp >= 100){
-    xp = 0;
+    xp = xp - 100;
     level++;
     alert("LEVEL UP!");
   }
 
+  updateUI();
+}
+
+/* UPDATE UI */
+function updateUI(){
   document.getElementById("xp").innerText = xp;
   document.getElementById("level").innerText = level;
 }
-</script></body>
+
+/* INIT */
+loadData();
+updateUI();
+
+</script>
+
+</body>
 </html>
