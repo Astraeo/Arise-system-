@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ARISE QUEST ENGINE</title>
+  <title>ARISE SYSTEM</title>
 
   <style>
     body{
@@ -15,7 +15,6 @@
 
     h1{
       text-shadow:0 0 15px #00ffcc;
-      letter-spacing:2px;
     }
 
     .panel{
@@ -24,7 +23,6 @@
       margin:10px;
       padding:15px;
       box-shadow:0 0 20px #00ffcc22;
-      backdrop-filter: blur(6px);
     }
 
     .btn{
@@ -43,17 +41,10 @@
       padding:10px;
       border-radius:10px;
       cursor:pointer;
-      transition:0.2s;
-    }
-
-    .quest:hover{
-      background:#00ffcc11;
-      transform:scale(1.03);
     }
 
     #system{
       font-weight:bold;
-      text-shadow:0 0 10px #00ffcc;
       background:#001f1f;
     }
   </style>
@@ -61,69 +52,83 @@
 
 <body>
 
-<h1>⚡ ARISE QUEST ENGINE ⚡</h1>
+<h1>⚡ ARISE SYSTEM ⚡</h1>
 
-<div class="panel" id="system">SYSTEM: BOOTING...</div>
+<div class="panel" id="system">SYSTEM READY</div>
 
-<!-- LEVEL -->
+<button class="btn" onclick="toggleSound()">🔊 SOUND</button>
+
 <div class="panel">
-  <h2>LEVEL: <span id="level">1</span></h2>
-  <h2>XP: <span id="xp">0</span>/100</h2>
+  LEVEL: <span id="level">1</span> |
+  XP: <span id="xp">0</span>/100
 </div>
 
-<!-- STATS -->
 <div class="panel">
-  <h3>📊 STATS</h3>
-  💪 STR: <span id="str">1</span> |
-  🫀 STA: <span id="sta">1</span> |
-  ⚡ AGI: <span id="agi">1</span> |
-  🔥 STREAK: <span id="streak">0</span>
+  💪 <span id="str">1</span> |
+  🫀 <span id="sta">1</span> |
+  ⚡ <span id="agi">1</span> |
+  🔥 <span id="streak">0</span>
 </div>
 
-<!-- CATEGORY SELECT -->
 <div class="panel">
-  <h2>SELECT TRAINING PATH</h2>
-
-  <button class="btn" onclick="selectCategory('strength')">💪 STRENGTH</button>
-  <button class="btn" onclick="selectCategory('stamina')">🫀 STAMINA</button>
-  <button class="btn" onclick="selectCategory('agility')">⚡ AGILITY</button>
+  <button class="btn" onclick="selectCategory('strength')">💪 Strength</button>
+  <button class="btn" onclick="selectCategory('stamina')">🫀 Stamina</button>
+  <button class="btn" onclick="selectCategory('agility')">⚡ Agility</button>
 </div>
 
-<!-- QUEST BOARD -->
+<div class="panel" id="questBoard"></div>
+
 <div class="panel">
-  <h2>DAILY QUEST BOARD</h2>
-  <div id="questBoard">Select a category</div>
+  ACTIVE: <span id="activeQuest">None</span><br>
+  <button class="btn" onclick="completeQuest()">COMPLETE QUEST</button>
 </div>
 
-<!-- ACTIVE -->
-<div class="panel">
-  <h2>ACTIVE QUEST</h2>
-  <p id="activeQuest">None</p>
-  <p id="status">Idle</p>
-</div>
+<!-- AUDIO -->
+<audio id="sfxComplete" src="https://www.myinstants.com/media/sounds/success.mp3"></audio>
+<audio id="sfxLevel" src="https://www.myinstants.com/media/sounds/level-up.mp3"></audio>
+<audio id="sfxClick" src="https://www.myinstants.com/media/sounds/click.mp3"></audio>
 
 <script>
 
-/* ================= DATA ================= */
-let xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
-let level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
+/* DATA */
+let xp = parseInt(localStorage.getItem("xp")) || 0;
+let level = parseInt(localStorage.getItem("level")) || 1;
 
-let str = localStorage.getItem("str") ? parseInt(localStorage.getItem("str")) : 1;
-let sta = localStorage.getItem("sta") ? parseInt(localStorage.getItem("sta")) : 1;
-let agi = localStorage.getItem("agi") ? parseInt(localStorage.getItem("agi")) : 1;
+let str = parseInt(localStorage.getItem("str")) || 1;
+let sta = parseInt(localStorage.getItem("sta")) || 1;
+let agi = parseInt(localStorage.getItem("agi")) || 1;
 
-let streak = localStorage.getItem("streak") ? parseInt(localStorage.getItem("streak")) : 0;
+let streak = parseInt(localStorage.getItem("streak")) || 0;
 let lastLogin = localStorage.getItem("lastLogin") || "";
 
-let selectedCategory = "";
-let activeQuest = "";
+let selectedCategory = localStorage.getItem("category") || "";
+let activeQuest = localStorage.getItem("activeQuest") || "";
+let questBoard = JSON.parse(localStorage.getItem("questBoard")) || [];
 
-/* ================= SYSTEM ================= */
-function system(msg){
-  document.getElementById("system").innerText = "SYSTEM: " + msg;
+/* SOUND */
+let soundEnabled = true;
+
+function playSound(id){
+  if(!soundEnabled) return;
+  let s = document.getElementById(id);
+  if(s){
+    s.currentTime = 0;
+    s.play();
+  }
 }
 
-/* ================= SAVE ================= */
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  alert(soundEnabled ? "Sound ON" : "Sound OFF");
+}
+
+/* SYSTEM */
+function system(msg){
+  document.getElementById("system").innerText = msg;
+  playSound("sfxClick");
+}
+
+/* SAVE */
 function save(){
   localStorage.setItem("xp", xp);
   localStorage.setItem("level", level);
@@ -132,122 +137,136 @@ function save(){
   localStorage.setItem("agi", agi);
   localStorage.setItem("streak", streak);
   localStorage.setItem("lastLogin", lastLogin);
+  localStorage.setItem("category", selectedCategory);
+  localStorage.setItem("activeQuest", activeQuest);
+  localStorage.setItem("questBoard", JSON.stringify(questBoard));
 }
 
-/* ================= DIFFICULTY ================= */
+/* UI */
+function updateUI(){
+  document.getElementById("xp").innerText = xp;
+  document.getElementById("level").innerText = level;
+  document.getElementById("str").innerText = str;
+  document.getElementById("sta").innerText = sta;
+  document.getElementById("agi").innerText = agi;
+  document.getElementById("streak").innerText = streak;
+  document.getElementById("activeQuest").innerText = activeQuest || "None";
+}
+
+/* DIFFICULTY */
 function scale(base){
-  return Math.floor(base + (level * 0.2 * base));
+  return Math.floor(base + level * 0.2 * base);
 }
 
-/* ================= QUEST POOLS ================= */
+/* QUESTS */
 function getQuests(type){
 
-  if(type === "strength"){
+  if(type==="strength"){
     return [
-      `Push-ups (${scale(10)} reps)`,
-      `Squats (${scale(15)} reps)`,
-      `Plank (${scale(30)} sec)`,
-      `Burpees (${scale(10)} reps)`
+      "Push-ups ("+scale(10)+" reps)",
+      "Squats ("+scale(15)+" reps)",
+      "Plank ("+scale(30)+" sec)"
     ];
   }
 
-  if(type === "stamina"){
+  if(type==="stamina"){
     return [
-      `Jog ${ (0.3 + level*0.05).toFixed(1) } km`,
-      `Walk ${ (0.5 + level*0.1).toFixed(1) } km`,
-      `Fast walk 10 min`,
-      `Endurance walk 15 min`
+      "Jog "+(0.3+level*0.05).toFixed(1)+" km",
+      "Walk "+(0.5+level*0.1).toFixed(1)+" km"
     ];
   }
 
-  if(type === "agility"){
+  if(type==="agility"){
     return [
-      `Sprint intervals (5 rounds)`,
-      `Fast walk drills (10 min)`,
-      `Jump training (50 reps)`,
-      `Speed walk challenge`
+      "Sprint drills",
+      "Jump training",
+      "Speed walk"
     ];
   }
-
-  return [];
 }
 
-/* ================= CATEGORY ================= */
+/* CATEGORY */
 function selectCategory(cat){
   selectedCategory = cat;
-  system(cat.toUpperCase() + " PATH SELECTED");
+  system("PATH: "+cat.toUpperCase());
   generateBoard();
+  save();
 }
 
-/* ================= BOARD ================= */
+/* BOARD */
 function generateBoard(){
+  let pool = getQuests(selectedCategory);
+  questBoard = [];
 
-  let quests = getQuests(selectedCategory);
-  let board = "";
-
-  for(let i=0;i<quests.length;i++){
-    board += `<div class='quest' onclick="startQuest('${quests[i]}')">
-      ${quests[i]}
-    </div>`;
+  for(let i=0;i<3;i++){
+    let q = pool[Math.floor(Math.random()*pool.length)];
+    questBoard.push(q);
   }
 
-  document.getElementById("questBoard").innerHTML = board;
+  renderBoard();
 }
 
-/* ================= START QUEST ================= */
-function startQuest(q){
-  activeQuest = q;
-
-  document.getElementById("activeQuest").innerText = q;
-  document.getElementById("status").innerText = "QUEST STARTED";
-
-  system("QUEST INITIALIZED: " + selectedCategory.toUpperCase());
+/* RENDER */
+function renderBoard(){
+  let html="";
+  questBoard.forEach((q,i)=>{
+    html+=`<div class="quest" onclick="startQuest(${i})">${q}</div>`;
+  });
+  document.getElementById("questBoard").innerHTML=html;
 }
 
-/* ================= COMPLETE ================= */
+/* START QUEST */
+function startQuest(i){
+  activeQuest = questBoard[i];
+  system("QUEST STARTED");
+  playSound("sfxClick");
+  save();
+  updateUI();
+}
+
+/* COMPLETE */
 function completeQuest(){
 
-  xp += 50;
+  if(!activeQuest) return;
 
-  if(selectedCategory === "strength") str++;
-  if(selectedCategory === "stamina") sta++;
-  if(selectedCategory === "agility") agi++;
+  xp+=50;
 
-  if(xp >= 100){
-    xp -= 100;
+  if(selectedCategory==="strength") str++;
+  if(selectedCategory==="stamina") sta++;
+  if(selectedCategory==="agility") agi++;
+
+  if(xp>=100){
+    xp-=100;
     level++;
-    system("LEVEL UP ⚡");
+    playSound("sfxLevel");
+    system("LEVEL UP!");
   }
 
+  playSound("sfxComplete");
+
+  activeQuest="";
+  generateBoard();
+
   save();
-
-  system("QUEST COMPLETE ✔");
-
-  generateBoard(); // 🔥 auto new quests after completion
+  updateUI();
 }
 
-/* ================= STREAK ================= */
+/* STREAK */
 function checkStreak(){
-  let today = new Date().toDateString();
-
-  if(lastLogin !== today){
+  let today=new Date().toDateString();
+  if(lastLogin!==today){
     streak++;
-    lastLogin = today;
-
-    xp += 10;
-
-    system("DAILY STREAK BONUS +10 XP");
+    lastLogin=today;
+    xp+=10;
+    system("STREAK +10 XP");
     save();
   }
 }
 
-/* ================= DEMO COMPLETE BUTTON (TEMP TEST) ================= */
-/* since GPS integration already exists in your previous version,
-   this is placeholder for manual completion */
-document.addEventListener("dblclick", completeQuest);
-
-/* ================= INIT ================= */
+/* INIT */
 checkStreak();
+updateUI();
+renderBoard();
 
 </script>
 
