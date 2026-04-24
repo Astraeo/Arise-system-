@@ -5,7 +5,6 @@
 
   <meta name="theme-color" content="#000000">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <link rel="manifest" href="pwa/manifest.json">
 
   <style>
@@ -35,7 +34,16 @@
 
 <body>
 
-<h2>⚡ ARISE SYSTEM v10 ⚡</h2>
+<h2>⚡ ARISE SYSTEM ⚡</h2>
+
+<!-- CATEGORY -->
+<div class="panel">
+  <h3>Select Path</h3>
+
+  <div class="quest" onclick="selectCategory('strength')">💪 Strength</div>
+  <div class="quest" onclick="selectCategory('stamina')">🏃 Stamina</div>
+  <div class="quest" onclick="selectCategory('agility')">⚡ Agility</div>
+</div>
 
 <div class="panel" id="stats"></div>
 <div class="panel" id="questBoard"></div>
