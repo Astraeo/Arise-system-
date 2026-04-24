@@ -4,12 +4,11 @@ let activeType = "";
 
 function startSensor(){
 
-  window.addEventListener("devicemotion", e=>{
+  function handler(e){
 
     if(activeType !== "sensor") return;
 
     let a = e.accelerationIncludingGravity;
-
     let total = Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);
 
     let now = Date.now();
@@ -22,8 +21,10 @@ function startSensor(){
     }
 
     if(repCount >= 10){
-      window.removeEventListener("devicemotion", arguments.callee);
+      window.removeEventListener("devicemotion", handler);
       completeQuest();
     }
-  });
+  }
+
+  window.addEventListener("devicemotion", handler);
 }
