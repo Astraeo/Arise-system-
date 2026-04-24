@@ -21,18 +21,17 @@ function getQuests(cat){
       {t:"Sprint drill",type:"manual"}
     ];
   }
+
+  return [];
 }
 
 function generateBoard(){
 
   let pool = getQuests(category);
-
-  // shuffle
   pool = pool.sort(()=>Math.random()-0.5);
 
-  // NO DUPLICATES
-  let used = new Set();
   questBoard = [];
+  let used = new Set();
 
   for(let q of pool){
     if(!used.has(q.t)){
