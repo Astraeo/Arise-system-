@@ -1,4 +1,20 @@
+function selectCategory(cat){
+  category = cat;
+  localStorage.category = cat;
+
+  generateBoard();
+  renderStats();
+
+  console.log("Category:", cat);
+}
+
 function initGame(){
+
+  if(!category){
+    alert("Select your path first!");
+    return;
+  }
+
   generateBoard();
   renderStats();
 }
